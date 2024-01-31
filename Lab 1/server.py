@@ -1,26 +1,31 @@
 import socket
-
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 port = 3005
 
-localhost = '192.168.0.178'
 s.bind(("",port))
 
-s.listen(0)
- 
+s.listen(2)
 
+print('listening at port: ',port)
 
 c,addr = s.accept()
+print("connection established with ",addr)
+
 while True:
-    print('message',  {c.recv(1024).decode('UTF-8')} )    
-    print('enter msg')
-    sendmsg = input()
+    clientMsg = c.recv(1024).decode('UTF-8')
+    print('Message from Client: ',  clientMsg)   
+    if clientMsg == "Terminating connection":
+        print("Connection termniated by Server")
+        break  
+    
+    serverMsg = input("Enter Msg: ")
+    if serverMsg == 'exit':
+        c.send("Terminating connection".encode('UTF-8'))
+        break
+    c.send(serverMsg.encode('UTF-8'))
+    print("Message sent")
 
-    c.send(sendmsg.encode('UTF-8'))
-    print('sent')
-
-
-
+s.close()
    
     
    

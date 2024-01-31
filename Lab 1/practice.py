@@ -3,7 +3,7 @@ import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
-    ip = socket.gethostbyname('www.google.com')
+    ip = ""
 except socket.gaierror:
     print('error')
     print(socket.gaierror)
