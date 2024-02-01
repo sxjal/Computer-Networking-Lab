@@ -1,51 +1,38 @@
 import socket
+import random
 
-def send_message(sock, message):
-    # Split the message into chunks of 1024 bytes
-    chunks = [message[i:i+1024] for i in range(0, len(message), 1024)]
-    # Send each chunk separately
-    for chunk in chunks:
-        sock.send(chunk.encode())
+MAX_PACK = 3
 
-def receive_message(sock):
-    # Receive the message in chunks of 1024 bytes
-    chunks = []
-    while True:
-        
-        chunk = sock.recv(1024)
-        print(chunk)
-        if  chunk == "b'break'":
-            break
-        chunks.append(chunk.decode())
-    # Concatenate the chunks to form the complete message
-    message = ''.join(chunks)
-    return message
+def fragment_data(data, max_pack):
+    fragments = []
+    seq_start = random.randint(100, 999)
+    print("seq number: ",seq_start)
+    for i in range(0, len(data), max_pack):
+        fragment = {
+            'sequence_number': seq_start + i,
+            'data': data[i:i + max_pack]
+        }
+        fragments.append(fragment)
+    return fragments
 
-# Create a TCP/IP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-# Bind the socket to a specific address and port
-server_address = ('localhost', 10000)
-sock.bind(server_address)
+server_address = '127.0.0.1'
+server_port = 3005
 
-# Listen for incoming connections
-sock.listen(1)
+s.bind((server_address, server_port))
 
 while True:
-    # Wait for a connection
-    print('Waiting for a connection...')
-    connection, client_address = sock.accept()
-    try:
-        print('Connection from', client_address)
+    data = input("Enter the data to be sent: ")
+    #seqnumber:data
+    fragments = fragment_data(data, MAX_PACK)
+    for fragment in fragments:
+        seqNO = fragment['sequence_number']
+        data1 = fragment['data']
+        msg = f'{seqNO}:{data1}'
+        s.sendto(msg.encode('utf-8'), (server_address, server_port))
 
-        # Receive the data in chunks and concatenate them
-        data = receive_message(connection)
-        print('Received {!r}'.format(data))
+    print(f"Data sent in {len(fragments)} fragments.")
+    
+    s.sendto("/0".encode('utf-8'),(server_address,server_port))
 
-        # Send the data back to the client
-        send_message(connection, data)
-        print('Sent {!r}'.format(data))
-
-    finally:
-        # Clean up the connection
-        connection.close()
